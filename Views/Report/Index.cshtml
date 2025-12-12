@@ -1,0 +1,169 @@
+@model WaterTankerManager.Models.ViewModels.MonthlyReportViewModel
+
+@{
+    ViewData["Title"] = "Monthly Report";
+}
+
+<div class="container mt-4">
+    <style>
+        .a4-page {
+            background: white;
+            padding: 40px;
+            margin: 20px auto;
+            max-width: 210mm;
+            min-height: 297mm;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        @@media print {
+            body * {
+                visibility: hidden;
+            }
+            #report-content, #report-content * {
+                visibility: visible;
+            }
+            #report-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 20px;
+                box-shadow: none;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <h2>Monthly Report</h2>
+        @if (Model.DailyReports.Any())
+        {
+            <a asp-action="DownloadPdf" asp-route-month="@Model.SelectedMonth" asp-route-year="@Model.SelectedYear" asp-route-showHidden="@Model.ShowHidden" class="btn btn-success" target="_blank">
+                <i class="fa-solid fa-file-pdf me-2"></i> Download PDF
+            </a>
+        }
+    </div>
+    
+    <div class="card mb-4 no-print">
+        <div class="card-body">
+            <form asp-action="Index" method="get" class="row g-3 align-items-end">
+                <div class="col-auto">
+                    <label for="month" class="form-label">Month</label>
+                    <select name="month" id="month" class="form-select">
+                        @for (int i = 1; i <= 12; i++)
+                        {
+                            <!option value="@i" @(Model.SelectedMonth == i ? "selected" : "")>@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i)</!option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <label for="year" class="form-label">Year</label>
+                    <input type="number" name="year" id="year" class="form-control" value="@Model.SelectedYear" />
+                </div>
+                <div class="col-auto">
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="showHidden" id="showHidden" value="true" @(Model.ShowHidden ? "checked" : "")>
+                            <label class="form-check-label" for="showHidden">
+                                Show Hidden Reports
+                            </label>
+                        </div>
+                    }
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">Generate Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (Model.DailyReports.Any())
+    {
+        <div id="report-content" class="a4-page">
+            <div class="text-center mb-4">
+                <h3>@(Model.ShowHidden ? "Hidden Orders Report" : "Monthly Business Report")</h3>
+                <p class="mb-1"><strong>Period:</strong> @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(Model.SelectedMonth) @Model.SelectedYear</p>
+                <p>Generated on @DateTime.Now.ToShortDateString()</p>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm text-center">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th class="text-end">Rounds</th>
+                            <th class="text-end">Income</th>
+                            <th>Expense Details</th>
+                            <th class="text-end">Expense</th>
+                            <th class="text-end">Profit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.DailyReports)
+                        {
+                            <tr>
+                                <td>@item.Date.ToShortDateString()</td>
+                                <td class="text-end">@item.TotalRounds</td>
+                                <td class="text-end text-success">@item.TotalIncome.ToString("C")</td>
+                                <td class="text-start small text-muted">@item.ExpenseNames</td>
+                                <td class="text-end text-danger">@item.TotalExpense.ToString("C")</td>
+                                <td class="text-end fw-bold @(item.DailyProfit >= 0 ? "text-primary" : "text-danger")">
+                                    @item.DailyProfit.ToString("C")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="table-secondary fw-bold">
+                        <tr>
+                            <td>TOTAL</td>
+                            <td class="text-end">@Model.GrandTotalRounds</td>
+                            <td class="text-end text-success">@Model.GrandTotalIncome.ToString("C")</td>
+                            <td></td>
+                            <td class="text-end text-danger">@Model.GrandTotalExpense.ToString("C")</td>
+                            <td class="text-end @(Model.GrandTotalProfit >= 0 ? "text-primary" : "text-danger")">
+                                @Model.GrandTotalProfit.ToString("C")
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="row mt-4 avoid-break">
+                <div class="col-md-6 offset-md-6">
+                    <table class="table table-bordered table-sm text-center">
+                        <thead class="table-light">
+                            <tr>
+                                <th colspan="2">Profit Distribution @(Model.ShowHidden ? "(2 Partners)" : "(3 Partners)")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-start">Total Net Profit</td>
+                                <td class="text-end fw-bold @(Model.GrandTotalProfit >= 0 ? "text-primary" : "text-danger")">
+                                    @Model.GrandTotalProfit.ToString("C")
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-start">Profit Per Person</td>
+                                <td class="text-end fw-bold @(Model.ProfitPerPerson >= 0 ? "text-success" : "text-danger")">
+                                    @Model.ProfitPerPerson.ToString("C")
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="mt-5">
+                <p class="text-muted small text-center">End of Report</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info no-print">No data found for the selected month and year.</div>
+    }
+</div>

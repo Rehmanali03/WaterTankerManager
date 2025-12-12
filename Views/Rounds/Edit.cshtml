@@ -1,0 +1,41 @@
+@model WaterTankerManager.Models.RoundEntry
+
+@{
+    ViewData["Title"] = "Edit Round";
+}
+
+<div class="container mt-4">
+    <h2>Edit Round</h2>
+    <hr />
+    <div class="row">
+        <div class="col-md-4">
+            <form asp-action="Edit">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="Id" />
+                <div class="form-group mb-3">
+                    <label asp-for="Date" class="control-label"></label>
+                    <input asp-for="Date" class="form-control" type="date" />
+                    <span asp-validation-for="Date" class="text-danger"></span>
+                </div>
+                <div class="form-group mb-3">
+                    <label asp-for="NumberOfRounds" class="control-label"></label>
+                    <input asp-for="NumberOfRounds" class="form-control" />
+                    <span asp-validation-for="NumberOfRounds" class="text-danger"></span>
+                </div>
+                <div class="form-group mb-3">
+                    <label asp-for="TotalAmount" class="control-label"></label>
+                    <input asp-for="TotalAmount" class="form-control" />
+                    <span asp-validation-for="TotalAmount" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Save" class="btn btn-primary" />
+                    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

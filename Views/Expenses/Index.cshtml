@@ -1,0 +1,279 @@
+@model IEnumerable<WaterTankerManager.Models.ExpenseEntry>
+
+@{
+    ViewData["Title"] = "Expenses";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Expenses Management</h2>
+        @if (User.IsInRole("Admin"))
+        {
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
+                <i class="fa-solid fa-plus me-2"></i> Add New Expense
+            </button>
+        }
+    </div>
+
+    <div class="custom-table-container">
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Expense Name</th>
+                        <th>Expense Price</th>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <th>Actions</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model) {
+                        <tr>
+                            <td>@item.Date.ToShortDateString()</td>
+                            <td class="fw-bold text-secondary">@Html.DisplayFor(modelItem => item.ExpenseName)</td>
+                            <td class="text-danger">@item.ExpensePrice.ToString("C")</td>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <td>
+                                    <!-- Edit Button -->
+                                    <button type="button" class="btn-icon btn-icon-edit me-2 edit-btn" 
+                                            data-id="@item.Id" 
+                                            data-date="@item.Date.ToString("yyyy-MM-dd")" 
+                                            data-name="@item.ExpenseName" 
+                                            data-price="@item.ExpensePrice"
+                                            title="Edit">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                    <!-- Delete Button -->
+                                    <button type="button" class="btn-icon btn-icon-delete delete-btn" 
+                                            data-id="@item.Id" 
+                                            title="Delete">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ADD EXPENSE MODAL -->
+<div class="modal fade" id="addExpenseModal" tabindex="-1" aria-labelledby="addExpenseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Create" method="post" id="addExpenseForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addExpenseModalLabel">Add New Expense</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group mb-3">
+                        <label for="AddDate" class="form-label">Date</label>
+                        <input name="Date" type="date" class="form-control" id="AddDate" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                        <span id="AddDateError" class="validation-error">Date is required.</span>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="AddName" class="form-label">Expense Name</label>
+                        <input name="ExpenseName" class="form-control" id="AddName" placeholder="e.g. Fuel" />
+                        <span id="AddNameError" class="validation-error">Expense Name is required.</span>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="AddPrice" class="form-label">Expense Price</label>
+                        <input name="ExpensePrice" type="number" step="0.01" class="form-control" id="AddPrice" placeholder="e.g. 500.00" />
+                        <span id="AddPriceError" class="validation-error">Price must be greater than 0.</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" onclick="return validateAddExpense()">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT EXPENSE MODAL -->
+<div class="modal fade" id="editExpenseModal" tabindex="-1" aria-labelledby="editExpenseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Edit" method="post" id="editExpenseForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editExpenseModalLabel">Edit Expense</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="Id" id="EditId" />
+                    <div class="form-group mb-3">
+                        <label for="EditDate" class="form-label">Date</label>
+                        <input name="Date" type="date" class="form-control" id="EditDate" />
+                        <span id="EditDateError" class="validation-error">Date is required.</span>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="EditName" class="form-label">Expense Name</label>
+                        <input name="ExpenseName" class="form-control" id="EditName" />
+                        <span id="EditNameError" class="validation-error">Expense Name is required.</span>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="EditPrice" class="form-label">Expense Price</label>
+                        <input name="ExpensePrice" type="number" step="0.01" class="form-control" id="EditPrice" />
+                        <span id="EditPriceError" class="validation-error">Price must be greater than 0.</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" onclick="return validateEditExpense()">Update Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div class="modal fade" id="deleteExpenseModal" tabindex="-1" aria-labelledby="deleteExpenseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger" id="deleteExpenseModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this expense?
+            </div>
+            <div class="modal-footer">
+                <form asp-action="Delete" method="post">
+                    <input type="hidden" name="id" id="DeleteId" />
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Handle Edit Button Click
+            $('.edit-btn').click(function () {
+                var id = $(this).data('id');
+                var date = $(this).data('date');
+                var name = $(this).data('name');
+                var price = $(this).data('price');
+
+                $('#EditId').val(id);
+                $('#EditDate').val(date);
+                $('#EditName').val(name);
+                $('#EditPrice').val(price);
+
+                // Clear validation errors
+                $('.validation-error').hide();
+                $('.form-control').removeClass('is-invalid');
+
+                var editModal = new bootstrap.Modal(document.getElementById('editExpenseModal'));
+                editModal.show();
+            });
+
+            // Handle Delete Button Click
+            $('.delete-btn').click(function () {
+                var id = $(this).data('id');
+                $('#DeleteId').val(id);
+
+                var deleteModal = new bootstrap.Modal(document.getElementById('deleteExpenseModal'));
+                deleteModal.show();
+            });
+
+            // Clear errors on Add modal open
+            var addModal = document.getElementById('addExpenseModal');
+            addModal.addEventListener('show.bs.modal', function () {
+                $('.validation-error').hide();
+                $('.form-control').removeClass('is-invalid');
+                $('#addExpenseForm')[0].reset();
+                $('#AddDate').val(new Date().toISOString().split('T')[0]);
+            });
+        });
+
+        function validateAddExpense() {
+            var isValid = true;
+            
+            // Date
+            var date = $('#AddDate').val();
+            if (!date) {
+                $('#AddDate').addClass('is-invalid');
+                $('#AddDateError').show();
+                isValid = false;
+            } else {
+                $('#AddDate').removeClass('is-invalid');
+                $('#AddDateError').hide();
+            }
+
+            // Name
+            var name = $('#AddName').val();
+            if (!name || name.trim() === '') {
+                $('#AddName').addClass('is-invalid');
+                $('#AddNameError').show();
+                isValid = false;
+            } else {
+                $('#AddName').removeClass('is-invalid');
+                $('#AddNameError').hide();
+            }
+
+            // Price
+            var price = $('#AddPrice').val();
+            if (!price || price <= 0) {
+                $('#AddPrice').addClass('is-invalid');
+                $('#AddPriceError').show();
+                isValid = false;
+            } else {
+                $('#AddPrice').removeClass('is-invalid');
+                $('#AddPriceError').hide();
+            }
+
+            return isValid;
+        }
+
+        function validateEditExpense() {
+            var isValid = true;
+            
+            // Date
+            var date = $('#EditDate').val();
+            if (!date) {
+                $('#EditDate').addClass('is-invalid');
+                $('#EditDateError').show();
+                isValid = false;
+            } else {
+                $('#EditDate').removeClass('is-invalid');
+                $('#EditDateError').hide();
+            }
+
+            // Name
+            var name = $('#EditName').val();
+            if (!name || name.trim() === '') {
+                $('#EditName').addClass('is-invalid');
+                $('#EditNameError').show();
+                isValid = false;
+            } else {
+                $('#EditName').removeClass('is-invalid');
+                $('#EditNameError').hide();
+            }
+
+            // Price
+            var price = $('#EditPrice').val();
+            if (!price || price <= 0) {
+                $('#EditPrice').addClass('is-invalid');
+                $('#EditPriceError').show();
+                isValid = false;
+            } else {
+                $('#EditPrice').removeClass('is-invalid');
+                $('#EditPriceError').hide();
+            }
+
+            return isValid;
+        }
+    </script>
+}

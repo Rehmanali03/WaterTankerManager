@@ -1,0 +1,113 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Water Tanker Manager</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/WaterTankerManager.styles.css" asp-append-version="true" />
+</head>
+<body>
+    
+    <!-- Mobile Sidebar Toggle -->
+    <button class="btn btn-primary d-md-none position-fixed top-0 start-0 m-3 z-3 shadow-sm" id="sidebarToggle" style="z-index: 1100;">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+    
+    <div class="dashboard-overlay d-md-none" id="sidebarOverlay"></div>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="fa-solid fa-droplet text-primary"></i>
+                <span>TankerMgr</span>
+            </div>
+            
+            <nav class="nav flex-column">
+                <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </a>
+                <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Rounds" ? "active" : "")" asp-controller="Rounds" asp-action="Index">
+                    <i class="fa-solid fa-truck-droplet"></i> Daily Rounds
+                </a>
+                <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Expenses" ? "active" : "")" asp-controller="Expenses" asp-action="Index">
+                    <i class="fa-solid fa-money-bill-wave"></i> Expenses
+                </a>
+                <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Report" ? "active" : "")" asp-controller="Report" asp-action="Index">
+                    <i class="fa-solid fa-file-invoice"></i> Reports
+                </a>
+                @if (User.IsInRole("Admin"))
+                {
+                    <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Users" ? "active" : "")" asp-controller="Users" asp-action="Index">
+                        <i class="fa-solid fa-users"></i> Users
+                    </a>
+                }
+            </nav>
+            
+            <div class="mt-auto p-3 border-top">
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fa-solid fa-user-circle fa-2x text-muted me-2"></i>
+                        <div>
+                            <small class="d-block text-muted">Signed in as</small>
+                            <strong>@User.Identity.Name</strong>
+                        </div>
+                    </div>
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        <button type="submit" class="btn btn-outline-danger w-100 btn-sm">
+                            <i class="fa-solid fa-sign-out-alt me-1"></i> Logout
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-primary w-100">
+                        <i class="fa-solid fa-sign-in-alt me-1"></i> Login
+                    </a>
+                }
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            @RenderBody()
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Chart.js -->
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        $(document).ready(function() {
+            $('#sidebarToggle, #sidebarOverlay').click(function() {
+                $('#sidebar').toggleClass('active');
+                $('#sidebarOverlay').toggleClass('active');
+            });
+            
+            // Close sidebar when clicking a link (optional, good for mobile navigation)
+            $('.nav-link').click(function() {
+                if ($(window).width() < 768) {
+                    $('#sidebar').removeClass('active');
+                    $('#sidebarOverlay').removeClass('active');
+                }
+            });
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

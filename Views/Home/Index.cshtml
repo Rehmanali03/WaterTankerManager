@@ -1,0 +1,211 @@
+﻿@using WaterTankerManager.Models.ViewModels
+@model DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark">Dashboard</h2>
+            <p class="text-secondary">Overview for @Model.CurrentMonthName</p>
+        </div>
+        <div>
+            <!-- Date Filter could go here -->
+            <button class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                <i class="fa-solid fa-calendar me-2"></i> @Model.CurrentMonthName
+            </button>
+        </div>
+    </div>
+
+    <!-- KPI Cards Row -->
+    <div class="row g-4 mb-5">
+        <!-- Revenue Card -->
+        <div class="col-md-3">
+            <div class="kpi-card border-start border-4 border-primary">
+                <div class="kpi-icon-wrapper bg-light-primary">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+                <div class="kpi-title">Total Revenue</div>
+                <div class="kpi-value text-primary">@Model.TotalRevenue.ToString("C")</div>
+                <small class="text-muted"><i class="fa-solid fa-arrow-trend-up text-success"></i> This Month</small>
+            </div>
+        </div>
+        
+        <!-- Expenses Card -->
+        <div class="col-md-3">
+            <div class="kpi-card border-start border-4 border-danger">
+                <div class="kpi-icon-wrapper bg-light-danger">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+                <div class="kpi-title">Total Expenses</div>
+                <div class="kpi-value text-danger">@Model.TotalExpenses.ToString("C")</div>
+                <small class="text-muted">This Month</small>
+            </div>
+        </div>
+
+        <!-- Net Profit Card -->
+        <div class="col-md-3">
+            <div class="kpi-card border-start border-4 @(Model.NetProfit >= 0 ? "border-success" : "border-danger")">
+                <div class="kpi-icon-wrapper @(Model.NetProfit >= 0 ? "bg-light-success" : "bg-light-danger")">
+                    <i class="fa-solid fa-sack-dollar"></i>
+                </div>
+                <div class="kpi-title">@(Model.NetProfit >= 0 ? "Net Profit" : "Net Loss")</div>
+                <div class="kpi-value @(Model.NetProfit >= 0 ? "text-success" : "text-danger")">@Model.NetProfit.ToString("C")</div>
+                <small class="text-muted">Revenue - Expenses</small>
+            </div>
+        </div>
+
+        <!-- Total Rounds Card -->
+        <div class="col-md-3">
+            <div class="kpi-card border-start border-4 border-info">
+                <div class="kpi-icon-wrapper bg-light-info">
+                    <i class="fa-solid fa-truck-moving"></i>
+                </div>
+                <div class="kpi-title">Total Rounds</div>
+                <div class="kpi-value text-info">@Model.TotalRounds</div>
+                <small class="text-muted">Trips This Month</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row g-4 justify-content-center">
+        <!-- Chart Column -->
+        <div class="col-lg-8">
+            <div class="chart-container shadow-sm p-4 bg-white rounded-3">
+                <h5 class="section-title text-center mb-4">Profit vs Expense (This Month)</h5>
+                <div style="height: 400px; position: relative;">
+                    @if (Model.TotalRevenue > 0 || Model.TotalExpenses > 0)
+                    {
+                        <canvas id="profitExpensePieChart"></canvas>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column justify-content-center align-items-center h-100 text-muted">
+                            <i class="fa-solid fa-chart-pie fa-3x mb-3 opacity-50"></i>
+                            <p>No revenue data available for this month.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Frequency Chart Column -->
+        <div class="col-lg-4">
+            <div class="chart-container shadow-sm p-4 bg-white rounded-3 h-100">
+                <h5 class="section-title text-center mb-4">Daily Round Activity</h5>
+                <div style="height: 400px; position: relative;">
+                    @if (Model.DateFrequency.Any())
+                    {
+                        <canvas id="dailyActivityChart"></canvas>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column justify-content-center align-items-center h-100 text-muted">
+                            <i class="fa-solid fa-chart-bar fa-3x mb-3 opacity-50"></i>
+                            <p>No activity recorded yet.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Pie Chart Configuration (Profit vs Expense)
+        const ctxPie = document.getElementById('profitExpensePieChart');
+        if (ctxPie) {
+            const greenVal = @Model.ChartSlice1Value;
+            const greenLabel = '@Model.ChartSlice1Label';
+            
+            const redVal = @Model.ChartSlice2Value;
+            const redLabel = '@Model.ChartSlice2Label';
+
+            new Chart(ctxPie, {
+                type: 'pie',
+                data: {
+                    labels: [greenLabel + ' (' + greenVal + '%)', redLabel + ' (' + redVal + '%)'],
+                    datasets: [{
+                        data: [greenVal, redVal],
+                        backgroundColor: [
+                            '#2ecc71', // Green (Profit/Revenue)
+                            '#e74c3c'  // Red (Expense/Loss)
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Bar Chart Configuration (Daily Activity)
+        const ctxBar = document.getElementById('dailyActivityChart');
+        if (ctxBar) {
+            const dailyLabels = @Html.Raw(Json.Serialize(Model.DateFrequency.Select(x => x.Date.ToString("dd MMM"))));
+            const dailyCounts = @Html.Raw(Json.Serialize(Model.DateFrequency.Select(x => x.Count)));
+
+            new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: dailyLabels,
+                    datasets: [{
+                        label: 'Rounds',
+                        data: dailyCounts,
+                        backgroundColor: '#4361ee', // Primary Color
+                        borderRadius: 6,
+                        barThickness: 20
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                borderDash: [5, 5]
+                            },
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    return 'Date: ' + context[0].label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+}
