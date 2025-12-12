@@ -54,4 +54,3 @@ A modern, robust web application designed to streamline operations for Water Tan
 
 ## 📸 Screenshots
 
-*(Add screenshots of your Dashboard, Rounds Page, and Login Screen here)*
