@@ -38,7 +38,7 @@ A modern, robust web application designed to streamline operations for Water Tan
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/YOUR_USERNAME/WaterTankerManager.git
+    git clone https://github.com/Rehmanali03/WaterTankerManager.git
     ```
 2.  **Navigate to project directory**:
     ```bash
@@ -52,5 +52,4 @@ A modern, robust web application designed to streamline operations for Water Tan
     - **Default Admin**: `admin@water.com`
     - **Password**: `Admin123!`
 
-## 📸 Screenshots
 
