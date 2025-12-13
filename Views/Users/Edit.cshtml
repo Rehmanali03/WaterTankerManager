@@ -1,7 +1,7 @@
-@model WaterTankerManager.Controllers.CreateUserViewModel
+@model WaterTankerManager.Controllers.EditUserViewModel
 
 @{
-    ViewData["Title"] = "Create User";
+    ViewData["Title"] = "Edit User";
 }
 
 <div class="container-fluid">
@@ -12,15 +12,16 @@
                    <i class="fa-solid fa-arrow-left"></i>
                </a>
                <div>
-                   <h2 class="fw-bold text-dark mb-0">Create User</h2>
-                   <p class="text-secondary mb-0">Add a new user to the system</p>
+                   <h2 class="fw-bold text-dark mb-0">Edit User</h2>
+                   <p class="text-secondary mb-0">Update user details and access</p>
                </div>
             </div>
 
             <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
                 <div class="card-body p-4 p-md-5">
-                    <form asp-action="Create" method="post">
+                    <form asp-action="Edit" method="post">
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4 rounded-3"></div>
+                        <input type="hidden" asp-for="Id" />
 
                         <div class="mb-4">
                             <label asp-for="Email" class="form-label fw-bold text-secondary small text-uppercase">Email Address</label>
@@ -32,12 +33,12 @@
                         </div>
 
                         <div class="mb-4">
-                            <label asp-for="Password" class="form-label fw-bold text-secondary small text-uppercase">Password</label>
+                            <label asp-for="NewPassword" class="form-label fw-bold text-secondary small text-uppercase">New Password (Optional)</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0"><i class="fa-solid fa-lock text-muted"></i></span>
-                                <input asp-for="Password" class="form-control bg-light border-0 py-3" placeholder="Strong password" />
+                                <input asp-for="NewPassword" class="form-control bg-light border-0 py-3" placeholder="Leave blank to keep current" />
                             </div>
-                            <span asp-validation-for="Password" class="text-danger small mt-1"></span>
+                            <span asp-validation-for="NewPassword" class="text-danger small mt-1"></span>
                         </div>
                         
                         <div class="mb-5">
@@ -54,7 +55,7 @@
 
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary py-3 fw-bold shadow-sm">
-                                <i class="fa-solid fa-user-plus me-2"></i> Create Account
+                                <i class="fa-solid fa-save me-2"></i> Save Changes
                             </button>
                         </div>
                     </form>

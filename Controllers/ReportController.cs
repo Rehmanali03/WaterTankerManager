@@ -255,6 +255,10 @@ public class ReportController : Controller
                 ExpenseNames = string.Join(", ", e.Select(x => x.ExpenseName))
             };
             item.DailyProfit = item.TotalIncome - item.TotalExpense;
+            
+            // If marked as Off Day in any round or expense for that day
+            item.IsOffDay = r.Any(x => x.IsOffDay) || e.Any(x => x.IsOffDay);
+
             dailyReports.Add(item);
         }
 
@@ -270,7 +274,7 @@ public class ReportController : Controller
             ShowHidden = showHidden
         };
         
-        viewModel.ProfitPerPerson = viewModel.GrandTotalProfit / 2;
+        viewModel.ProfitPerPerson = viewModel.GrandTotalProfit / (showHidden ? 2 : 3);
 
         return viewModel;
     }

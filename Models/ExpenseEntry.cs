@@ -20,4 +20,7 @@ public class ExpenseEntry
     [Column(TypeName = "decimal(18, 2)")]
     [Display(Name = "Expense Price")]
     public decimal ExpensePrice { get; set; }
+
+    [Display(Name = "Off Day")]
+    public bool IsOffDay { get; set; }
 }

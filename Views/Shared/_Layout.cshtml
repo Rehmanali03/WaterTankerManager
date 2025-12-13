@@ -1,5 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
+@{
+    var currentController = ViewContext.RouteData.Values["Controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["Action"]?.ToString();
+    var isLoginPage = string.Equals(currentController, "Account", StringComparison.OrdinalIgnoreCase) && 
+                      string.Equals(currentAction, "Login", StringComparison.OrdinalIgnoreCase);
+}
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -21,14 +27,19 @@
 <body>
     
     <!-- Mobile Sidebar Toggle -->
-    <button class="btn btn-primary d-md-none position-fixed top-0 start-0 m-3 z-3 shadow-sm" id="sidebarToggle" style="z-index: 1100;">
-        <i class="fa-solid fa-bars"></i>
-    </button>
+    @if (!isLoginPage)
+    {
+        <button class="btn btn-primary d-md-none position-fixed top-0 start-0 m-3 z-3 shadow-sm" id="sidebarToggle" style="z-index: 1100;">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+    }
     
     <div class="dashboard-overlay d-md-none" id="sidebarOverlay"></div>
 
-    <div class="dashboard-container">
+    <div class="dashboard-container @(isLoginPage ? "no-sidebar" : "")">
         <!-- Sidebar -->
+        @if (!isLoginPage)
+        {
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <i class="fa-solid fa-droplet text-primary"></i>
@@ -80,6 +91,7 @@
                 }
             </div>
         </div>
+        }
 
         <!-- Main Content -->
         <div class="main-content">

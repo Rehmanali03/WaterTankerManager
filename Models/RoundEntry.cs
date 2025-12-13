@@ -22,4 +22,7 @@ public class RoundEntry
     public decimal TotalAmount { get; set; }
 
     public bool IsHidden { get; set; }
+
+    [Display(Name = "Off Day")]
+    public bool IsOffDay { get; set; }
 }

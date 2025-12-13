@@ -14,7 +14,7 @@
                 @if (ViewBag.ShowHidden)
                 {
                      <a asp-action="Index" asp-route-showHidden="false" class="btn btn-warning rounded-pill px-3 shadow-sm d-flex align-items-center">
-                        <i class="fa-solid fa-arrow-left me-2"></i> Return to Active
+                        <i class="fa-solid fa-arrow-left me-2"></i> Active
                     </a>
                 }
                 else
@@ -111,6 +111,23 @@
                         <input name="TotalAmount" type="number" step="0.01" class="form-control" id="AddAmount" placeholder="e.g. 1500.00" />
                         <span id="AddAmountError" class="validation-error">Amount must be greater than 0.</span>
                     </div>
+                    
+                    <!-- Day Off Segmented Control -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold mb-2">Day Status</label>
+                        <div class="segmented-control">
+                            <input type="radio" name="IsOffDay" value="false" id="AddTypeWorking" class="segmented-input" checked onchange="toggleRoundInputs(this, 'add')">
+                            <label class="segmented-label" for="AddTypeWorking">
+                                <i class="fa-solid fa-briefcase"></i> Working Day
+                            </label>
+
+                            <input type="radio" name="IsOffDay" value="true" id="AddTypeOff" class="segmented-input" onchange="toggleRoundInputs(this, 'add')">
+                            <label class="segmented-label" for="AddTypeOff">
+                                <i class="fa-solid fa-mug-hot"></i> Off Day
+                            </label>
+                        </div>
+                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -146,6 +163,22 @@
                         <label for="EditAmount" class="form-label">Total Amount</label>
                         <input name="TotalAmount" type="number" step="0.01" class="form-control" id="EditAmount" />
                         <span id="EditAmountError" class="validation-error">Amount must be greater than 0.</span>
+                    </div>
+
+                    <!-- Day Off Segmented Control (Edit) -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold mb-2">Day Status</label>
+                        <div class="segmented-control">
+                            <input type="radio" name="IsOffDay" value="false" id="EditTypeWorking" class="segmented-input" onchange="toggleRoundInputs(this, 'edit')">
+                            <label class="segmented-label" for="EditTypeWorking">
+                                <i class="fa-solid fa-briefcase"></i> Working Day
+                            </label>
+
+                            <input type="radio" name="IsOffDay" value="true" id="EditTypeOff" class="segmented-input" onchange="toggleRoundInputs(this, 'edit')">
+                            <label class="segmented-label" for="EditTypeOff">
+                                <i class="fa-solid fa-mug-hot"></i> Off Day
+                            </label>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -183,12 +216,11 @@
     <script>
         $(document).ready(function () {
             // Handle Toggle Hide Button Click
-            // Handle Toggle Hide Button Click
             $('.toggle-hide-btn').click(function () {
                 var btn = $(this);
                 var id = btn.data('id');
                 var row = $('#row-' + id);
-                var isHidden = btn.data('current-hidden') === 'True'; // Ensure you pass this data attr or infer it
+                var isHidden = btn.data('current-hidden') === 'True'; 
 
                 Swal.fire({
                     title: 'Toggle Visibility?',
@@ -202,27 +234,13 @@
                     if (result.isConfirmed) {
                         $.post('/Rounds/ToggleStatus/' + id, function (response) {
                             if (response.success) {
-                                // Success Popup
-                                Swal.fire(
-                                    'Updated!',
-                                    'Round visibility has been changed.',
-                                    'success'
-                                );
-                                // Remove the row as it no longer belongs to the current view
+                                Swal.fire('Updated!', 'Round visibility has been changed.', 'success');
                                 row.fadeOut(300, function() { $(this).remove(); });
                             } else {
-                                Swal.fire(
-                                    'Error!',
-                                    'Failed to update status.',
-                                    'error'
-                                );
+                                Swal.fire('Error!', 'Failed to update status.', 'error');
                             }
                         }).fail(function () {
-                            Swal.fire(
-                                'Error!',
-                                'Error communicating with server.',
-                                'error'
-                            );
+                            Swal.fire('Error!', 'Error communicating with server.', 'error');
                         });
                     }
                 });
@@ -234,11 +252,19 @@
                 var date = $(this).data('date');
                 var rounds = $(this).data('rounds');
                 var amount = $(this).data('amount');
+                var isOffDay = $(this).data('isoffday') === 'True';
 
                 $('#EditId').val(id);
                 $('#EditDate').val(date);
                 $('#EditRounds').val(rounds);
                 $('#EditAmount').val(amount);
+                
+                // Set Radio Buttons and Trigger UI/Logic update
+                if(isOffDay) {
+                    $('#EditTypeOff').prop('checked', true).trigger('change');
+                } else {
+                    $('#EditTypeWorking').prop('checked', true).trigger('change');
+                }
 
                 // Clear validation errors
                 $('.validation-error').hide();
@@ -252,7 +278,6 @@
             $('.delete-btn').click(function () {
                 var id = $(this).data('id');
                 $('#DeleteId').val(id);
-
                 var deleteModal = new bootstrap.Modal(document.getElementById('deleteRoundModal'));
                 deleteModal.show();
             });
@@ -264,12 +289,44 @@
                 $('.form-control').removeClass('is-invalid');
                 $('#addRoundForm')[0].reset();
                 $('#AddDate').val(new Date().toISOString().split('T')[0]);
+                
+                // Reset to Working Day
+                $('#AddTypeWorking').prop('checked', true).trigger('change');
             });
         });
 
+        // Toggle Inputs Logic
+        function toggleRoundInputs(radio, mode) {
+            var isOffDay = $(radio).val() === 'true';
+            var prefix = mode === 'add' ? '#Add' : '#Edit';
+            
+            var roundsInput = $(prefix + 'Rounds');
+            var amountInput = $(prefix + 'Amount');
+
+            if (isOffDay) {
+                // Freeze inputs
+                roundsInput.addClass('input-frozen').prop('readonly', true).val('0');
+                amountInput.addClass('input-frozen').prop('readonly', true).val('0.00');
+                
+                // Clear any validation errors immediately
+                roundsInput.removeClass('is-invalid');
+                amountInput.removeClass('is-invalid');
+                $(prefix + 'RoundsError').hide();
+                $(prefix + 'AmountError').hide();
+            } else {
+                // Unfreeze inputs
+                roundsInput.removeClass('input-frozen').prop('readonly', false);
+                amountInput.removeClass('input-frozen').prop('readonly', false);
+                
+                if(roundsInput.val() == '0') roundsInput.val('');
+                if(amountInput.val() == '0.00' || amountInput.val() == '0') amountInput.val('');
+            }
+        }
+
         function validateAddRound() {
             var isValid = true;
-            
+            var isOffDay = $('input[name="IsOffDay"]:checked', '#addRoundForm').val() === 'true';
+
             // Date Validation
             var date = $('#AddDate').val();
             if (!date) {
@@ -281,26 +338,33 @@
                 $('#AddDateError').hide();
             }
 
-            // Rounds Validation
-            var rounds = $('#AddRounds').val();
-            if (!rounds || rounds <= 0) {
-                $('#AddRounds').addClass('is-invalid');
-                $('#AddRoundsError').show();
-                isValid = false;
-            } else {
-                $('#AddRounds').removeClass('is-invalid');
-                $('#AddRoundsError').hide();
-            }
+            // Skip other validations if it's an Off Day
+            if (!isOffDay) {
+                // Rounds Validation
+                var rounds = $('#AddRounds').val();
+                if (!rounds || rounds <= 0) {
+                    $('#AddRounds').addClass('is-invalid');
+                    $('#AddRoundsError').show();
+                    isValid = false;
+                } else {
+                    $('#AddRounds').removeClass('is-invalid');
+                    $('#AddRoundsError').hide();
+                }
 
-            // Amount Validation
-            var amount = $('#AddAmount').val();
-            if (!amount || amount <= 0) {
-                $('#AddAmount').addClass('is-invalid');
-                $('#AddAmountError').show();
-                isValid = false;
+                // Amount Validation
+                var amount = $('#AddAmount').val();
+                if (!amount || amount <= 0) {
+                    $('#AddAmount').addClass('is-invalid');
+                    $('#AddAmountError').show();
+                    isValid = false;
+                } else {
+                    $('#AddAmount').removeClass('is-invalid');
+                    $('#AddAmountError').hide();
+                }
             } else {
-                $('#AddAmount').removeClass('is-invalid');
-                $('#AddAmountError').hide();
+                // Ensure values are set to 0 for submission
+                $('#AddRounds').val('0');
+                $('#AddAmount').val('0');
             }
 
             return isValid;
@@ -308,7 +372,8 @@
 
         function validateEditRound() {
             var isValid = true;
-            
+            var isOffDay = $('input[name="IsOffDay"]:checked', '#editRoundForm').val() === 'true';
+
             // Date
             var date = $('#EditDate').val();
             if (!date) {
@@ -320,26 +385,31 @@
                 $('#EditDateError').hide();
             }
 
-            // Rounds
-            var rounds = $('#EditRounds').val();
-            if (!rounds || rounds <= 0) {
-                $('#EditRounds').addClass('is-invalid');
-                $('#EditRoundsError').show();
-                isValid = false;
-            } else {
-                $('#EditRounds').removeClass('is-invalid');
-                $('#EditRoundsError').hide();
-            }
+            if (!isOffDay) {
+                // Rounds
+                var rounds = $('#EditRounds').val();
+                if (!rounds || rounds <= 0) {
+                    $('#EditRounds').addClass('is-invalid');
+                    $('#EditRoundsError').show();
+                    isValid = false;
+                } else {
+                    $('#EditRounds').removeClass('is-invalid');
+                    $('#EditRoundsError').hide();
+                }
 
-            // Amount
-            var amount = $('#EditAmount').val();
-            if (!amount || amount <= 0) {
-                $('#EditAmount').addClass('is-invalid');
-                $('#EditAmountError').show();
-                isValid = false;
+                // Amount
+                var amount = $('#EditAmount').val();
+                if (!amount || amount <= 0) {
+                    $('#EditAmount').addClass('is-invalid');
+                    $('#EditAmountError').show();
+                    isValid = false;
+                } else {
+                    $('#EditAmount').removeClass('is-invalid');
+                    $('#EditAmountError').hide();
+                }
             } else {
-                $('#EditAmount').removeClass('is-invalid');
-                $('#EditAmountError').hide();
+                $('#EditRounds').val('0');
+                $('#EditAmount').val('0');
             }
 
             return isValid;

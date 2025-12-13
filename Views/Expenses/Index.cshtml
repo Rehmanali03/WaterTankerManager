@@ -44,6 +44,7 @@
                                             data-date="@item.Date.ToString("yyyy-MM-dd")" 
                                             data-name="@item.ExpenseName" 
                                             data-price="@item.ExpensePrice"
+                                            data-isoffday="@item.IsOffDay"
                                             title="Edit">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </button>
@@ -88,6 +89,22 @@
                         <input name="ExpensePrice" type="number" step="0.01" class="form-control" id="AddPrice" placeholder="e.g. 500.00" />
                         <span id="AddPriceError" class="validation-error">Price must be greater than 0.</span>
                     </div>
+                    
+                    <!-- Day Off Segmented Control -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold mb-2">Day Status</label>
+                        <div class="segmented-control">
+                            <input type="radio" name="IsOffDay" value="false" id="AddTypeWorking" class="segmented-input" checked onchange="toggleExpenseInputs(this, 'add')">
+                            <label class="segmented-label" for="AddTypeWorking">
+                                <i class="fa-solid fa-briefcase"></i> Working Day
+                            </label>
+
+                            <input type="radio" name="IsOffDay" value="true" id="AddTypeOff" class="segmented-input" onchange="toggleExpenseInputs(this, 'add')">
+                            <label class="segmented-label" for="AddTypeOff">
+                                <i class="fa-solid fa-mug-hot"></i> Off Day
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -123,6 +140,22 @@
                         <label for="EditPrice" class="form-label">Expense Price</label>
                         <input name="ExpensePrice" type="number" step="0.01" class="form-control" id="EditPrice" />
                         <span id="EditPriceError" class="validation-error">Price must be greater than 0.</span>
+                    </div>
+
+                    <!-- Day Off Segmented Control (Edit) -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold mb-2">Day Status</label>
+                        <div class="segmented-control">
+                            <input type="radio" name="IsOffDay" value="false" id="EditTypeWorking" class="segmented-input" onchange="toggleExpenseInputs(this, 'edit')">
+                            <label class="segmented-label" for="EditTypeWorking">
+                                <i class="fa-solid fa-briefcase"></i> Working Day
+                            </label>
+
+                            <input type="radio" name="IsOffDay" value="true" id="EditTypeOff" class="segmented-input" onchange="toggleExpenseInputs(this, 'edit')">
+                            <label class="segmented-label" for="EditTypeOff">
+                                <i class="fa-solid fa-mug-hot"></i> Off Day
+                            </label>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -165,11 +198,19 @@
                 var date = $(this).data('date');
                 var name = $(this).data('name');
                 var price = $(this).data('price');
+                var isOffDay = $(this).data('isoffday') === 'True';
 
                 $('#EditId').val(id);
                 $('#EditDate').val(date);
                 $('#EditName').val(name);
                 $('#EditPrice').val(price);
+
+                // Set Radio Buttons and Trigger UI/Logic update
+                if(isOffDay) {
+                    $('#EditTypeOff').prop('checked', true).trigger('change');
+                } else {
+                    $('#EditTypeWorking').prop('checked', true).trigger('change');
+                }
 
                 // Clear validation errors
                 $('.validation-error').hide();
@@ -195,11 +236,43 @@
                 $('.form-control').removeClass('is-invalid');
                 $('#addExpenseForm')[0].reset();
                 $('#AddDate').val(new Date().toISOString().split('T')[0]);
+                
+                // Reset to Working Day
+                $('#AddTypeWorking').prop('checked', true).trigger('change');
             });
         });
 
+        // Toggle Inputs Logic
+        function toggleExpenseInputs(radio, mode) {
+            var isOffDay = $(radio).val() === 'true';
+            var prefix = mode === 'add' ? '#Add' : '#Edit';
+            
+            var nameInput = $(prefix + 'Name');
+            var priceInput = $(prefix + 'Price');
+
+            if (isOffDay) {
+                // Freeze inputs
+                nameInput.addClass('input-frozen').prop('readonly', true).val('Off Day');
+                priceInput.addClass('input-frozen').prop('readonly', true).val('0.00');
+                
+                // Clear any validation errors immediately
+                nameInput.removeClass('is-invalid');
+                priceInput.removeClass('is-invalid');
+                $(prefix + 'NameError').hide();
+                $(prefix + 'PriceError').hide();
+            } else {
+                // Unfreeze inputs
+                nameInput.removeClass('input-frozen').prop('readonly', false);
+                priceInput.removeClass('input-frozen').prop('readonly', false);
+                
+                if(nameInput.val() == 'Off Day') nameInput.val('');
+                if(priceInput.val() == '0.00') priceInput.val('');
+            }
+        }
+
         function validateAddExpense() {
             var isValid = true;
+            var isOffDay = $('input[name="IsOffDay"]:checked', '#addExpenseForm').val() === 'true';
             
             // Date
             var date = $('#AddDate').val();
@@ -212,26 +285,32 @@
                 $('#AddDateError').hide();
             }
 
-            // Name
-            var name = $('#AddName').val();
-            if (!name || name.trim() === '') {
-                $('#AddName').addClass('is-invalid');
-                $('#AddNameError').show();
-                isValid = false;
-            } else {
-                $('#AddName').removeClass('is-invalid');
-                $('#AddNameError').hide();
-            }
+            if (!isOffDay) {
+                // Name
+                var name = $('#AddName').val();
+                if (!name || name.trim() === '') {
+                    $('#AddName').addClass('is-invalid');
+                    $('#AddNameError').show();
+                    isValid = false;
+                } else {
+                    $('#AddName').removeClass('is-invalid');
+                    $('#AddNameError').hide();
+                }
 
-            // Price
-            var price = $('#AddPrice').val();
-            if (!price || price <= 0) {
-                $('#AddPrice').addClass('is-invalid');
-                $('#AddPriceError').show();
-                isValid = false;
+                // Price
+                var price = $('#AddPrice').val();
+                if (!price || price <= 0) {
+                    $('#AddPrice').addClass('is-invalid');
+                    $('#AddPriceError').show();
+                    isValid = false;
+                } else {
+                    $('#AddPrice').removeClass('is-invalid');
+                    $('#AddPriceError').hide();
+                }
             } else {
-                $('#AddPrice').removeClass('is-invalid');
-                $('#AddPriceError').hide();
+                // Ensure values are set for submission
+                $('#AddName').val('Off Day');
+                $('#AddPrice').val('0');
             }
 
             return isValid;
@@ -239,6 +318,7 @@
 
         function validateEditExpense() {
             var isValid = true;
+            var isOffDay = $('input[name="IsOffDay"]:checked', '#editExpenseForm').val() === 'true';
             
             // Date
             var date = $('#EditDate').val();
@@ -251,26 +331,31 @@
                 $('#EditDateError').hide();
             }
 
-            // Name
-            var name = $('#EditName').val();
-            if (!name || name.trim() === '') {
-                $('#EditName').addClass('is-invalid');
-                $('#EditNameError').show();
-                isValid = false;
-            } else {
-                $('#EditName').removeClass('is-invalid');
-                $('#EditNameError').hide();
-            }
+            if (!isOffDay) {
+                // Name
+                var name = $('#EditName').val();
+                if (!name || name.trim() === '') {
+                    $('#EditName').addClass('is-invalid');
+                    $('#EditNameError').show();
+                    isValid = false;
+                } else {
+                    $('#EditName').removeClass('is-invalid');
+                    $('#EditNameError').hide();
+                }
 
-            // Price
-            var price = $('#EditPrice').val();
-            if (!price || price <= 0) {
-                $('#EditPrice').addClass('is-invalid');
-                $('#EditPriceError').show();
-                isValid = false;
+                // Price
+                var price = $('#EditPrice').val();
+                if (!price || price <= 0) {
+                    $('#EditPrice').addClass('is-invalid');
+                    $('#EditPriceError').show();
+                    isValid = false;
+                } else {
+                    $('#EditPrice').removeClass('is-invalid');
+                    $('#EditPriceError').hide();
+                }
             } else {
-                $('#EditPrice').removeClass('is-invalid');
-                $('#EditPriceError').hide();
+                $('#EditName').val('Off Day');
+                $('#EditPrice').val('0');
             }
 
             return isValid;

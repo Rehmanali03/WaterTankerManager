@@ -37,4 +37,5 @@ public class DailyReportItem
     public decimal TotalExpense { get; set; }
     public string ExpenseNames { get; set; } = string.Empty;
     public decimal DailyProfit { get; set; }
+    public bool IsOffDay { get; set; }
 }

@@ -104,8 +104,14 @@
                     <tbody>
                         @foreach (var item in Model.DailyReports)
                         {
-                            <tr>
-                                <td>@item.Date.ToShortDateString()</td>
+                            <tr class="@(item.IsOffDay ? "table-warning" : "")">
+                                <td>
+                                    @item.Date.ToShortDateString()
+                                    @if(item.IsOffDay) 
+                                    {
+                                        <span class="badge bg-secondary ms-2">OFF DAY</span>
+                                    }
+                                </td>
                                 <td class="text-end">@item.TotalRounds</td>
                                 <td class="text-end text-success">@item.TotalIncome.ToString("C")</td>
                                 <td class="text-start small text-muted">@item.ExpenseNames</td>
